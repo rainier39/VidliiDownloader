@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 import os
 import sys
 
-version = "1.1"
+version = "1.2"
 
 # We have to send the site a user agent.
 headers = {"User-Agent": "Mozilla/5.0 +https://github.com/rainier39/VidliiDownloader VidLiiDownloader/" + version}
@@ -17,6 +17,9 @@ badchars = ["<", ">", ":", "\"", "/", "\\", "|", "?", "*"]
 
 # List of Windows reserved filenames.
 badfilenames = ["con", "prn", "aux", "nul", "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9", "com0", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9", "lpt0", "com¹", "com²", "com³", "lpt¹", "lpt²", "lpt³"]
+
+# Send all requests over the same TCP session to be faster and more efficient.
+s = requests.Session()
 
 def gracefulExit():
   # If we're on Windows, wait for user input so the window doesn't just close with no output from their perspective.
@@ -37,12 +40,15 @@ if not url.startswith("https://www.vidlii.com/watch?v="):
 
 # Get the page.
 try:
-  page = requests.get(url, headers=headers)
+  page = s.get(url, headers=headers)
 except:
   print("Error: failed to find video. Maybe VidLii is down or you don't have a working internet connection.")
   gracefulExit()
 
-# TODO: more error handling for VidLii being down, the video not existing, etc.
+# Handle the video not existing.
+if (page.url == "https://www.vidlii.com/"):
+  print("Error: no such video exists on VidLii.")
+  gracefulExit()
 
 # Invoke BeautifulSoup.
 soup = BeautifulSoup(page.content, "lxml")
@@ -93,7 +99,11 @@ if os.path.exists(os.path.join(cwd, title + ".mp4")):
 
 # Get the video file.
 print("Downloading " + title + "...")
-video = requests.get("https://www.vidlii.com" + filepath, headers=headers)
+try:
+  video = s.get("https://www.vidlii.com" + filepath, headers=headers)
+except:
+  print("Error: failed to find video. Maybe VidLii is down or you don't have a working internet connection.")
+  gracefulExit()
 
 # Write the video file to the disk.
 f = open(title + ".mp4", "wb")
