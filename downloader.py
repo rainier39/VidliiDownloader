@@ -1,5 +1,6 @@
 # ------------------------------------------------------------------ #
 # VidLii downloader. Downloads videos off of VidLii given their URL. #
+#           https://github.com/rainier39/VidliiDownloader            #
 # ------------------------------------------------------------------ #
 
 import requests
